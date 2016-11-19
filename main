@@ -1,52 +1,14 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Nov 13 21:49:18 2016
+Created on Sat Nov 19 15:27:52 2016
 
 @author: claude
 """
-import tushare as ts
 
-THRESH_HOLD_OUTSTANDING = 5000
-REALTIME_BASIC_LIST = ['code','name','price','bid','ask','volume','amount','time']
-REALTIME_BID_BUY_LIST = ['b1_v', 'b1_p', 'b2_v', 'b2_p', 'b3_v', 'b3_p', 'b4_v', 'b4_p', 'b5_v', 'b5_p']
-REALTIME_BID_SELL_LIST = ['a1_v', 'a1_p', 'a2_v', 'a2_p', 'a3_v', 'a3_p', 'a4_v', 'a4_p', 'a5_v', 'a5_p']
-THRESH_MOUNT = 5000000
+from monitor import *
 
-def GetStocksToBeObserved():
-    raw_data_df = ts.get_stock_basics()
-    stock_idx = raw_data_df.filter(raw_data_df.outstanding<THRESH_HOLD_OUTSTANDING)
-    return stock_idx.index.values
-    
-def GetValue(number):
-    try:
-        return float(number)
-    except ValueError:
-        return 0
-        
-def GetWatchList(stock_idx, total_num=stock_idx.size):
-    watch_list = []
-    for idx in xrange(0, total_num):
-        stock_code = stock_idx[idx]
-        df = ts.get_realtime_quotes(stock_code) #Single stock symbol
-        df[REALTIME_BASIC_LIST + REALTIME_BID_BUY_LIST + REALTIME_BID_SELL_LIST]
-        for i in range(0,5):#buy
-            mount = GetValue(df[REALTIME_BID_BUY_LIST[2*i]][0])*GetValue(df[REALTIME_BID_BUY_LIST[2*i+1]][0])
-            if mount>THRESH_MOUNT:
-                watch_list.append(stock_code)
-                break
-        for i in range(0,5):#sell
-            mount = GetValue(df[REALTIME_BID_SELL_LIST[2*i]][0])*GetValue(df[REALTIME_BID_SELL_LIST[2*i+1]][0])
-            if mount>THRESH_MOUNT:
-                watch_list.append(stock_code)
-                break
-    return watch_list
-        
 if __name__ == "__main__":
-    stock_idx = GetStocksToBeObserved()
-    cnt = 0
-    while 1:
-        print 'Begin', cnt
-        watch_list = GetWatchList(stock_idx,100)
-        print watch_list        
-        print 'End'
-        cnt += 1
+    df = GetDbValue(conn,sql_stock_pool)
+    Monitor(conn, df, MAX_MONITOR_STOCK_NUM)
+    conn.close();
+ 
